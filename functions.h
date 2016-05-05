@@ -6,6 +6,8 @@
 #include "sicengine.c"
 
 ADDRESS a;
+_Bool hasItBeenAssembled = 0;
+_Bool hasItBeenLoaded = 0;
 
 // Symbol Table
 typedef struct {
@@ -61,7 +63,7 @@ void authenticator(char comm[], char p1[], char p2[])
         /* If no paramaters needed only parameter 1 is checked.
            If only one parameter is needed both parameters are checked.
            If two parameters are needed both are checked.
-        */
+        */        
         
         if(!strcmp(comm,"load"))
                  {
@@ -69,7 +71,11 @@ void authenticator(char comm[], char p1[], char p2[])
                                 printf("Error: Parameter needed.\n");
                         else if(p2[0] != '\0')
                                 printf("Error: Second parameter not required.\n");
+                        else if ( !hasItBeenAssembled )
+								printf("Error: no source file has been assembled.\n");
                         else {
+							
+								hasItBeenLoaded = 1;
                                 a = load(p1);
 							}
                 }
@@ -77,9 +83,9 @@ void authenticator(char comm[], char p1[], char p2[])
                 {
                         if(p1[0] != '\0')
                                 printf("Error: No parameters needed.\n");
+                        else if ( !hasItBeenLoaded )
+								printf("Error: No object file has been loaded into memory.\n");
                         else {
-							
-								printf("addr: %d\n", a);
                                 SICRun(&a,0);
 						}
                 }
@@ -96,8 +102,20 @@ void authenticator(char comm[], char p1[], char p2[])
                                 printf("Error: First parameter incorrect.\n");
                         else if(p2[0] == '\0')
                                 printf("Error: Second parameter incorrect.\n");
-                        else
-                                printf("Command is %s.\n", comm);
+                        else{
+							
+								ADDRESS addr;
+								BYTE data;
+								int temp;
+							
+								sscanf(p1, "%x", &addr);
+								sscanf(p2, "%x", &temp);
+								data = (BYTE) temp;
+								
+								printf("ADDR: @%i@, DATA: @%i@\n", addr, data);
+							
+                               GetMem(addr, &data, 0);
+						}
                 }
         else if(!strcmp(comm,"help"))
                 {
@@ -113,6 +131,7 @@ void authenticator(char comm[], char p1[], char p2[])
                         else if(p2[0] != '\0')
                                 printf("Error: Second parameter not required.\n");
                         else{
+							   hasItBeenAssembled = 1;
                                assemble(p1);
                         }
                 }
@@ -365,7 +384,7 @@ void welcomeMessage()
 
         system("clear");
         printf("%s\n", asciipic_txt);
-        printf("Welcome to Sim OS 3.0\n");
+        printf("Welcome to Sim OS 4.0\n");
         printf("For supported commands type: help\n\n");
 
 } 
@@ -547,46 +566,6 @@ void assemble(char fileName [])
 									
 									
 								}
-								/*else if( strcmp(instruction, "WORD") == 0)
-								{
-									// Error checking blank operand
-									if ( operand[0] == '\0' || !hexCheck(operand))
-										error = error | 8;
-									
-									fprintf(out, "%x\n", locctr);
-									locctr += 3;
-								}
-								else if ( strcmp(instruction, "RESW") == 0)
-								{
-									// Error checking blank operand
-									if ( operand[0] == '\0'|| !hexCheck(operand))
-										error = error | 8;
-										
-									fprintf(out, "%x\n", locctr);
-									sscanf(operand, "%d", &intOperand);
-									locctr += 3*intOperand;
-								}
-								else if ( strcmp(instruction, "RESB") == 0)
-								{
-									// Error checking blank operand
-									if ( operand[0] == '\0'|| !hexCheck(operand))
-										error = error | 8;
-										
-									fprintf(out, "%x\n", locctr);
-									sscanf(operand, "%d", &intOperand);
-									locctr += intOperand;
-								}
-								else if ( strcmp(instruction, "BYTE") == 0)
-									{
-										// Check operand for BYTE directive
-										if ( byteOperandCheck(operand, &locctr))
-										{
-												error = error | 8;
-										}
-											
-										fprintf(out, "%x\n", locctr);
-											
-									}*/
 								else
 								{
 									// Set error flag for missing instruction (256)
@@ -765,6 +744,7 @@ void assemble(char fileName [])
 		
 		// Initialize first part of Text record string
 		textRecord1[0] = 'T';
+		textRecord1[1] = '\0';
 		strcat(textRecord1, strAddress);
 		
 		// Initialize second part of Text record string
@@ -780,6 +760,7 @@ void assemble(char fileName [])
 			if ( strlen(statement) == 0)
 				break;
 			
+			// Print out to the listing file
 			if ( strcmp(strOpcode, "FB") == 0 )
 				fprintf(output, "%-75s\n", statement );
 			else
@@ -1410,8 +1391,6 @@ ADDRESS load(char fileName []){
 	sscanf(temp, "%06X", &num);
 	
 	ADDRESS addr = (ADDRESS) num;
-	
-	printf("ADDR: %X\n", addr);
 	
 	return addr;
 	

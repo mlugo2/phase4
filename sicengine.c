@@ -51,7 +51,7 @@ typedef unsigned char   BYTE;
 typedef BYTE            WORD[3];
 typedef BYTE            FLOAT[4];
 typedef unsigned char   BOOLEAN;
-typedef unsigned int   ADDRESS;
+typedef unsigned long   ADDRESS;
 typedef char*           MESSAGE;
 typedef struct {
         char OP[7];
@@ -256,7 +256,7 @@ void GetIR (ADDRESS Addr, char * Inst)
         case 2:                 /* Register-Register */
         R1 = IR[1] >> 4 & 0x7;
         R2 = IR[1] & 0x7;
-                sprintf(Inst, "%6s  %s,%s", Ops[OpCode].OP, REG[R1], REG[R2]);
+                sprintf(Inst, "%6s  %c,%c", Ops[OpCode].OP, REG[R1], REG[R2]);
                 break;
         case 3:                 /* Format 3 & 4 and SIC */
                 if (N == 0 && I == 0) {         /* SIC */
@@ -1341,7 +1341,6 @@ void SICRun(ADDRESS *TempPC, BOOLEAN SingleStep)
      running = TRUE;
      ERROR = FALSE;
      if (*TempPC > MSIZE) {
-		 puts("Here");
          SICError(3);      /* invalid address specified */
      }
      PC = *TempPC;
