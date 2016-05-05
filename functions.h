@@ -39,6 +39,7 @@ void welcomeMessage();
 
 /* Directive functions */
 void assemble(char []);
+void dump( char [], char []);
 ADDRESS load(char []);
 
 /* Directive dependencies */
@@ -103,18 +104,8 @@ void authenticator(char comm[], char p1[], char p2[])
                         else if(p2[0] == '\0')
                                 printf("Error: Second parameter incorrect.\n");
                         else{
-							
-								ADDRESS addr;
-								BYTE data;
-								int temp;
-							
-								sscanf(p1, "%x", &addr);
-								sscanf(p2, "%x", &temp);
-								data = (BYTE) temp;
 								
-								printf("ADDR: @%i@, DATA: @%i@\n", addr, data);
-							
-                               GetMem(addr, &data, 0);
+								dump( p1, p2);
 						}
                 }
         else if(!strcmp(comm,"help"))
@@ -207,12 +198,12 @@ void clear( char string[], int n)
 void displayCommnads()
 {
 
-    printf("\nload filename: Loads the specified file.\n\n");
+    printf("\nload <filename>: Loads the specified file.\n\n");
 	printf(	"execute: Executes the program that was previously loaded in memory.\n\n");
 	printf(	"debug: Executes in debug mode.\n\n");
-	printf(	"dump start end: Calls the dump function, passing the values of start and end.\n\n");
+	printf(	"dump <start> <end>: Calls the dump function, passing the values from start and end.\n\n");
 	printf(	"help: Prints out a list of available commands.\n\n");
-	printf(	"assemble filename: Assembles an SIC assembly language program into a load module and store it in a file.\n\n");
+	printf(	"assemble <filename>: Assembles an SIC assembly language program into a load module and store it in a file.\n\n");
 	printf(	"directory: Lists the files stored in the current directory.\n\n");
 	printf(	"exit: Exit from the simulator.\n\n");
 
@@ -1311,6 +1302,47 @@ _Bool hexCheck( char num[])
 		return 1;
 }
 
+void dump( char start[], char end []){
+	
+	ADDRESS addr;
+	BYTE data;
+	int temp, temp2;
+	int len;
+	int counter = 1;					
+	
+	sscanf(start, "%x", &temp);
+	sscanf(end, "%x", &temp2);
+	
+	len = temp2 - temp + 1;
+								
+	addr = (ADDRESS) temp;
+	data = (BYTE) temp2;
+	
+	GetMem( addr, &data, 0);
+	printf("%X: ", addr);
+	
+	while (len > 0){
+	
+	
+			if ( counter % 16 == 0){
+			printf("\n");
+			GetMem( addr, &data, 0);
+			printf("%X: ", addr);
+
+		}
+		printf("%02X ", data);
+		counter++;
+		
+
+		
+		addr++;
+		GetMem( addr, &data, 0);
+		len--;
+		
+	}
+    printf("\n");
+}
+
 ADDRESS load(char fileName []){
 	
 	FILE *in;
@@ -1318,9 +1350,6 @@ ADDRESS load(char fileName []){
 	char temp[50];
 	
 	temp[0] = '\0';
-	
-	// Assign file name
-	//strcpy(fileName, "objectfile");
 	
 	// Open thefile for reading and check to availability
 	if ( (in = fopen(fileName, "r")) == NULL  )
